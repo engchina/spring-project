@@ -1,0 +1,7 @@
+stages:
+  - start
+
+start-code-job:
+  stage: start
+  script:
+    - echo "Hello World"
