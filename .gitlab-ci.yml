@@ -1,19 +1,26 @@
+image: maven:3.6.3-jdk-8-alpine
+
 stages:
-  - install
   - build
+  - test
   - deploy
 
-install_job:
-  stage: install
-  script:
-    - echo 'hello install'
-
-build_job:
+build:
   stage: build
   script:
-    - echo 'hello build'
+    - mvn clean install
+  artifacts:
+    paths:
+      - target/*.jar
 
-deploy_job:
+test:
+  stage: test
+  script:
+    - mvn test
+
+deploy:
   stage: deploy
   script:
-    - echo 'hello deploy'
+    - mvn spring-boot:run
+  only:
+    - master
