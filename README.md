@@ -1,92 +1,106 @@
-# spring-project
+# OCI DevOps - Speed up builds with caching
+
+In most cases, the build time is consumed in downloading or preparing certain build dependancies like maven dependencies, node_modules, pip dependancies, etc... This procedure talks about on how to reduce time by caching those dependencies for the subsequent runs. 
+
+In this way, the first run would take full time to download and setup build dependancies. But the subsequent runs will be more efficient through the cache.
+
+For this, sample java maven-based application is used to demonstrate build caching.
+
+### Prerequisites/Assumptions
+* Assumed you are already familiar with OCI DevOps. Please refer [Documentation](https://www.oracle.com/devops/devops-service/)
+* To know how to run the this maven project in your local. Please refer [this](./SETUP-PROJECT.md)
+* Assumed that you are using docker build inside your `build_spec.yaml`
+* As OCI Object storage is used to store the cache, Please create a bucket and set right access policies for the same. [Click here](https://docs.oracle.com/en-us/iaas/Content/Object/Concepts/objectstorageoverview.htm) to know more about Object Storage.
+
+### References
+* [OCI DevOps CICD Reference Architecture](https://docs.oracle.com/en/solutions/ci-cd-pipe-oci-devops/index.html)
+* [OCI DevOps Documentation](https://docs.oracle.com/en-us/iaas/Content/devops/using/home.htm)
+* [Creating DevOps Project](https://docs.oracle.com/en-us/iaas/Content/devops/using/create_project.htm)
+* [Creating Repository](https://docs.oracle.com/en-us/iaas/Content/devops/using/managing_coderepo.htm)
+* [Creating Build Pipeline](https://docs.oracle.com/en-us/iaas/Content/devops/using/managing_build_pipelines.htm)
+* [Creating Deploy Pipeline](https://docs.oracle.com/en-us/iaas/Content/devops/using/deployment_pipelines.htm)
 
 
+### Overview of Changes
+For any project, you may tweek `build_spec.yaml` to enable build cache.
 
-## Getting started
+#### Step 1
+* Create OCI Object Storage bucket `build-cache`
+* Create Policies, for build to access Object Storage bucket.
+```
+Allow dynamic-group <dg-devops-build-pipeline> to read buckets in compartment <compartment-name>
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+Allow dynamic-group <dg-devops-build-pipeline> to manage objects in compartment <compartment-name> where all {target.bucket.name='build-cache'}
+```
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+#### Step 2
+Docker BuildKit is installed to enable few advanced docker build commands for caching.
+```
+  - type: Command
+    name: "Docker BuildKit Setup"
+    timeoutInSeconds: 140
+    command: |
+      wget https://github.com/docker/buildx/releases/download/v0.8.2/buildx-v0.8.2.linux-amd64 -O docker-buildx
+      mkdir -p ~/.docker/cli-plugins
+      mv docker-buildx ~/.docker/cli-plugins/
+      chmod +x ~/.docker/cli-plugins/docker-buildx
+      docker buildx install
+```
+#### Step 3
+`Build Cache Restore` stage is used to download the pre-uploaded cache from OCI Object Storage.
 
 ```
-cd existing_repo
-git remote add origin https://192.168.31.13/oracle/spring-project.git
-git branch -M main
-git push -uf origin main
+  - type: Command
+    name: "Build Cache Restore"
+    timeoutInSeconds: 140
+    command: |
+      oci os object get --bucket-name build-cache --file ${BUILD_CACHE_OS_FILE_NAME} --name ${BUILD_CACHE_OS_FILE_NAME} && unzip ${BUILD_CACHE_OS_FILE_NAME}
+      echo "Done..."
 ```
 
-## Integrate with your tools
+#### Step 4
+In actual build stage, below comands are used in the place of regular `docker build`.
+```
+  - type: Command
+    name: "Docker build"
+    command: |
+      export DOCKER_BUILDKIT=1
+      export DOCKER_CLI_EXPERIMENTAL=enabled
+      docker buildx create --use
+      docker buildx build -t="hello-world-java" --cache-from=type=local,src=./cache --cache-to=type=local,dest=./cache --load .
+      echo "DONE"
+```
 
-- [ ] [Set up project integrations](https://192.168.31.13/oracle/spring-project/-/settings/integrations)
+#### Step 5
+`Build Cache Upload` stage is added to collect the generated build cache and upload to OCI Object Storage bucket. This is used for subsequent builds.
 
-## Collaborate with your team
+```
+  - type: Command
+    name: "Build Cache Upload"
+    timeoutInSeconds: 140
+    command: |
+      rm ${BUILD_CACHE_OS_FILE_NAME} && zip -r ${BUILD_CACHE_OS_FILE_NAME} cache/*
+      oci os object put --bucket-name build-cache --file ${BUILD_CACHE_OS_FILE_NAME} --force
+```
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Automatically merge when pipeline succeeds](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+#### Step 6
+In `Dockerfile`, We need to pass `--mount` argument to `RUN` command to use cache for the specific build command as below.
 
-## Test and Deploy
+```
+RUN --mount=type=cache,target=/root/.m2 mvn package
+```
 
-Use the built-in continuous integration in GitLab.
+### Results
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+#### Before OCI Build Cache
+![6m 33s](images/BeforeOCIBuildCache.png "Before Caching")
 
-***
+#### After OCI Build Cache
+![0m 49s](images/AfterOCIBuildCache.png "After Caching")
 
-# Editing this README
+### Contributors 
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
+- Author : Ashok CM
+- Collaborators : NA
+- Last release : May 2022
 
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
