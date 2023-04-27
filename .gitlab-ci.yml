@@ -44,7 +44,6 @@ deploy:
 docker-build:
   variables:
     CI_REGISTRY_IMAGE: "hello-world"
-    CI_REGISTRY: "https://index.docker.io/v1/"
   stage: docker-build
 #  image: harbor.server.local/library/moby/buildkit:buildx-stable-1
   image: harbor.server.local/library/docker:23.0.5-dind-alpine3.17
@@ -58,8 +57,8 @@ docker-build:
 #    - docker buidx build -t $CI_REGISTRY_USER/$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG --cache-from=type=local,src=./cache --cache-to=type=local,dest=./cache --load .
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD ${CI_REGISTRY}
 #    - docker buildx build --network host -t $CI_REGISTRY_USER/$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG .
-    - docker build --network host -t $CI_REGISTRY_USER/$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG .
-    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+    - docker build --network host -t ${CI_REGISTRY}/library/$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG .
+    - docker push ${CI_REGISTRY}/library/$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   only:
     - main
   tags:
