@@ -41,6 +41,21 @@ deploy:
   tags:
     - group-runner
 
+buildah-build:
+  variables:
+    CI_REGISTRY_IMAGE: "hello-world"
+  stage: docker-build
+  image: harbor.server.local/library/buildah:1.28.0
+  script:
+    - export DOCKER_HOST=192.168.31.13
+    - buildah login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD ${CI_REGISTRY}
+    - buildah build --network host -t ${CI_REGISTRY}/library/$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG .
+    - buildah push ${CI_REGISTRY}/library/$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+  only:
+    - main
+  tags:
+    - group-runner
+
 docker-build:
   variables:
     CI_REGISTRY_IMAGE: "hello-world"
@@ -60,6 +75,6 @@ docker-build:
     - docker build --network host -t ${CI_REGISTRY}/library/$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG .
     - docker push ${CI_REGISTRY}/library/$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   only:
-    - main
+    - master
   tags:
     - group-runner
