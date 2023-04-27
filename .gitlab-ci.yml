@@ -39,6 +39,7 @@ deploy:
 docker-build:
   variables:
     CI_REGISTRY_IMAGE: "hello-world"
+  image: docker:23.0.5-dind-alpine3.17
   stage: docker-build
   services:
     - docker:19.03.8-dind
