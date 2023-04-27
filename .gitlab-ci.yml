@@ -46,8 +46,8 @@ docker-build:
     CI_REGISTRY_IMAGE: "hello-world"
     CI_REGISTRY: "https://index.docker.io/v1/"
   stage: docker-build
-#   image: moby/buildkit:buildx-stable-1
-  image: docker:23.0.5-dind-alpine3.17
+  image: moby/buildkit:buildx-stable-1
+#  image: docker:23.0.5-dind-alpine3.17
 #  services:
 #    - docker:23.0.5-dind-alpine3.17
   script:
