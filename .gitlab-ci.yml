@@ -1,7 +1,19 @@
 stages:
-  - start
+  - install
+  - build
+  - deploy
 
-start-code-job:
-  stage: start
+install_job:
+  stage: install
   script:
-    - echo "Start ..."
+    - echo 'hello install'
+
+build_job:
+  stage: build
+  script:
+    - echo 'hello build'
+
+deploy_job:
+  stage: deploy
+  script:
+    - echo 'hello deploy'
