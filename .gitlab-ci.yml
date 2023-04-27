@@ -5,6 +5,10 @@ stages:
   - test
   - deploy
 
+cache:
+  paths:
+    - ~/.m2/
+
 build:
   stage: build
   script:
@@ -12,11 +16,15 @@ build:
   artifacts:
     paths:
       - target/*.jar
+  tags:
+    - group-runner
 
 test:
   stage: test
   script:
     - mvn test
+  tags:
+    - group-runner
 
 deploy:
   stage: deploy
@@ -24,3 +32,5 @@ deploy:
     - mvn spring-boot:run
   only:
     - main
+  tags:
+    - group-runner
