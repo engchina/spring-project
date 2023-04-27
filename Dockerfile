@@ -1,6 +1,6 @@
 # Maven build container 
 
-FROM maven:3.9.1-amazoncorretto-17-debian AS maven_build
+FROM harbor.server.local/library/maven:3.9.1-amazoncorretto-17-debian AS maven_build
 
 COPY pom.xml /tmp/
 
@@ -13,7 +13,7 @@ RUN mvn package
 
 #pull base image
 
-FROM amazoncorretto:17-alpine3.17-jdk
+FROM harbor.server.local/library/amazoncorretto:17-alpine3.17-jdk
 
 #expose port 8080
 EXPOSE 8080
