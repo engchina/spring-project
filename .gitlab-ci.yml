@@ -38,7 +38,7 @@ deploy:
 
 docker-build:
   variables:
-    - CI_REGISTRY_IMAGE: "hello-world"
+    CI_REGISTRY_IMAGE: "hello-world"
   stage: docker-build
   services:
     - docker:19.03.8-dind
