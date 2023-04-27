@@ -19,7 +19,7 @@ build:
     paths:
       - target/*.jar
   tags:
-    - group-runner
+    - instance-runner
   only:
     - dev
 
@@ -28,7 +28,7 @@ test:
   script:
     - mvn test
   tags:
-    - group-runner
+    - instance-runner
   only:
     - dev
 
@@ -39,7 +39,7 @@ deploy:
   only:
     - master
   tags:
-    - group-runner
+    - instance-runner
 
 docker-build:
   variables:
@@ -60,4 +60,4 @@ docker-build:
   only:
     - main
   tags:
-    - group-runner
+    - instance-runner
