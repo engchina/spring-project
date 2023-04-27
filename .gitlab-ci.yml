@@ -19,6 +19,8 @@ build:
       - target/*.jar
   tags:
     - group-runner
+  only:
+    - dev
 
 test:
   stage: test
@@ -26,6 +28,8 @@ test:
     - mvn test
   tags:
     - group-runner
+  only:
+    - dev
 
 deploy:
   stage: deploy
