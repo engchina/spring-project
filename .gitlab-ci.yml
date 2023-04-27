@@ -4,6 +4,7 @@ stages:
   - build
   - test
   - deploy
+  - docker-build
 
 cache:
   paths:
@@ -30,6 +31,21 @@ deploy:
   stage: deploy
   script:
     - mvn spring-boot:run
+  only:
+    - master
+  tags:
+    - group-runner
+
+docker-build:
+  variables:
+    - CI_REGISTRY_IMAGE: "hello-world"
+  stage: docker-build
+  services:
+    - docker:19.03.8-dind
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $CI_REGISTRY_USER/$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   only:
     - main
   tags:

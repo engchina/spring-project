@@ -1,6 +1,6 @@
 # Maven build container 
 
-FROM maven:3.8.5-openjdk-11 AS maven_build
+FROM maven:3.9.1-amazoncorretto-17-debian AS maven_build
 
 COPY pom.xml /tmp/
 
@@ -12,7 +12,7 @@ RUN --mount=type=cache,target=/root/.m2 mvn package
 
 #pull base image
 
-FROM openjdk
+FROM amazoncorretto:17-alpine3.17-jdk
 
 #expose port 8080
 EXPOSE 8080
