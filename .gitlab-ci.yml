@@ -58,7 +58,7 @@ docker-build:
      - docker buildx inspect --bootstrap
     # - docker buildx create --driver docker-container --driver-opt network=host --use tonistiigi/binfmt:latest
     # docker/dockerfile:1.5.2 buildpack-deps:buster
-     - docker buildx build -t $CI_REGISTRY_USER/$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG --cache-from=type=local,src=./cache --cache-to=type=local,dest=./cache --load .
+     - docker buildx build --build-arg BUILDKIT_TLS_VERIFY=0 --secret id=ca,src=/ca.pem -t $CI_REGISTRY_USER/$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG --cache-from=type=local,src=./cache --cache-to=type=local,dest=./cache --load .
 #     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD ${CI_REGISTRY}
 #     - docker build --network host -t ${CI_REGISTRY}/library/$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG .
 #     - docker push ${CI_REGISTRY}/library/$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
