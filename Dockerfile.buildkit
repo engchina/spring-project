@@ -1,6 +1,0 @@
-# docker build -t harbor.server.local/library/moby/buildkit-ca:buildx-stable-1 -f Dockerfile.buildkit .
-# docker push harbor.server.local/library/moby/buildkit-ca:buildx-stable-1
-FROM harbor.server.local/library/moby/buildkit:buildx-stable-1
-
-ENV BUILDKIT_TLS_VERIFY=0
-COPY ./certs /etc/gitlab-runner/certs

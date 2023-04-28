@@ -8,8 +8,8 @@ COPY src /tmp/src/
 
 WORKDIR /tmp/
 
-#RUN --mount=type=cache,target=/root/.m2 mvn package
-RUN mvn package
+RUN --mount=type=cache,target=/root/.m2 mvn package
+#RUN mvn package
 
 #pull base image
 
