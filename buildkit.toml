@@ -1,0 +1,5 @@
+[registry."harbor.server.local"]
+http = false
+insecure = false
+ca=["/u01/certs/ca.crt"]
+
