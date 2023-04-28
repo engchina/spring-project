@@ -53,11 +53,11 @@ docker-build:
      - export DOCKER_BUILDKIT=1
      - export DOCKER_CLI_EXPERIMENTAL=enabled
      - docker buildx install
-     - docker buildx create --use --driver docker-container --driver-opt network=host --driver-opt image=harbor.server.local/library/moby/buildkit:buildx-stable-1
+     - docker buildx create --use --config buildkit.toml --driver docker-container --driver-opt network=host --driver-opt image=harbor.server.local/library/moby/buildkit:buildx-stable-1
     # - docker buildx create --driver docker-container --driver-opt network=host --use tonistiigi/binfmt:latest
     # docker/dockerfile:1.5.2 buildpack-deps:buster
     # - docker buildx build --build-arg BUILDKIT_TLS_VERIFY=0 --build-arg BUILDKIT_HOST=192.168.31.13:2376 --secret id=ca,src=/etc/gitlab-runner/certs/ca.crt -t $CI_REGISTRY_USER/$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG --cache-from=type=local,src=./cache --cache-to=type=local,dest=./cache --load .
-     - docker buildx build -t $CI_REGISTRY_USER/$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG --cache-from=type=local,src=./cache --cache-to=type=local,dest=./cache --load .
+     - docker buildx build --secret id=ca,src=/etc/gitlab-runner/certs/ca.crt -t $CI_REGISTRY_USER/$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG --cache-from=type=local,src=./cache --cache-to=type=local,dest=./cache --load .
 #     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD ${CI_REGISTRY}
 #     - docker build --network host -t ${CI_REGISTRY}/library/$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG .
 #     - docker push ${CI_REGISTRY}/library/$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
