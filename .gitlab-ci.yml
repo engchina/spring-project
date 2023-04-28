@@ -53,7 +53,9 @@ docker-build:
      - export DOCKER_BUILDKIT=1
      - export DOCKER_CLI_EXPERIMENTAL=enabled
      - docker buildx install
+     - docker buildx inspect --bootstrap
      - docker buildx create --driver docker --driver-opt network=host --use buildpack-deps:buster
+     - docker buildx inspect --bootstrap
     # - docker buildx create --driver docker-container --driver-opt network=host --use tonistiigi/binfmt:latest
     # docker/dockerfile:1.5.2
      - docker buildx build -t $CI_REGISTRY_USER/$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG --cache-from=type=local,src=./cache --cache-to=type=local,dest=./cache --load .
