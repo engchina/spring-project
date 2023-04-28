@@ -46,7 +46,8 @@ docker-build:
     CI_REGISTRY_IMAGE: "hello-world"
   stage: docker-build
 #  image: harbor.server.local/library/docker:23.0.5-dind-alpine3.17
-  image: harbor.server.local/library/moby/buildkit:buildx-stable-1
+  image: harbor.server.local/library/docker-buildkit:23.0.5-dind-alpine3.17
+#  image: harbor.server.local/library/moby/buildkit:buildx-stable-1
   script:
      - export DOCKER_HOST=192.168.31.13
      - export DOCKER_BUILDKIT=1
